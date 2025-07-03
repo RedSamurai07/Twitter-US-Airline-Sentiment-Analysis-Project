@@ -28,13 +28,12 @@ The marketing team can utilize the findings to strategically plan special promot
 
 ### Goal
 The objective of this analysis is to:
-The primary goal is to leverage tweet data to understand public perception of airlines, identify key drivers of negative sentiment, and help airlines make data-driven decisions to improve customer satisfaction and service quality. This could involve building predictive models for sentiment or root cause analysis.
+The primary goal is to leverage tweet data to understand public perception of airlines, identify key drivers of negative sentiment, and help airlines make data-driven decisions to improve customer satisfaction and service quality. This could involve building predictive models for sentiment or root cause analysis for the below mentioned key points.
 
-- Sentiment Prediction
-- Negative Feedback Categorization 
-- Airline Performance Benchmarking
-- Actionable Insights for Operations
-
+- Customer Loyalty & Retention
+- Demographic & Geographic Analysis
+- Program Effectiveness & Customer Behavior
+  
 ### Data structure and initial checks
 [Dataset](https://docs.google.com/spreadsheets/d/1EmudVOp_6vISH8C27vD4agJJEUKdFzSddlHsfkjXDeg/edit?gid=639920194#gid=639920194)
 
@@ -43,17 +42,20 @@ The primary goal is to leverage tweet data to understand public perception of ai
 | Features | Description | Data types |
 | -------- | -------- | -------- | 
 | tweet_id | A unique numerical identifier for each tweet. | int |
-
-| date | Date when the transaction occurred (MM/DD/YYYY format). | object |
-| transaction_time | Time when the transaction was made (HH:MM:SS format).| object |
-| transaction_qty  | Number of units purchased in the transaction. | int |
-| store_id  | Unique identifier for the store where the purchase was made. | int |       
-| store_location |  Name of the store location. | object |
-| product_id     |  Unique identifier for each product sold. | int |
-| unit_price     |  Price per unit of the product (includes currency symbol).| float |
-| product_category | Broad classification of the product. | object |
-| product_type     | Subcategory of the product | object |
-| product_detail   | Detailed name of the specific product. | object |
+| airline_sentiment | The categorized sentiment of the tweet towards the airline. | object |
+| airline_sentiment_confidence | A numerical value (between 0 and 1) indicating the confidence level of the assigned airline_sentiment. | float |
+| negativereason | If the airline_sentiment is 'negative', this column specifies the reason for the negative feedback.| object  |
+| negativereason_confidence | A numerical value (between 0 and 1) indicating the confidence level of the assigned negativereason. | float |       
+| airline | The name of the airline mentioned in the tweet | object |
+| airline_sentiment_gold | Gold-standard sentiment, likely used for a small subset of hand-labeled data for validation purposes. This column contains many missing values. | object |
+| name | The Twitter handle (username) of the individual who posted the tweet. | object |
+| negativereason_gold | The full content of the tweet. This is the primary data for sentiment analysis. | object |
+| retweet_count | The number of times the tweet has been retweeted. | int|  
+| text  | The full content of the tweet. This is the primary data for sentiment analysis. | object |
+|  tweet_coord | Geographic coordinates of the tweet, if available. | object |
+| tweet_created | The date and time when the tweet was posted. | object |
+| tweet_location | The user-provided location from which the tweet was sent. | object |
+| user_timezone | The timezone setting of the user who posted the tweet. | object |
 
 ### Tools
 - Excel : Google Sheets - Check for data types, Table formatting
@@ -62,49 +64,536 @@ The primary goal is to leverage tweet data to understand public perception of ai
   
 ### Data Analysis
 1). Python
-
 - Importing Libraries
 ``` python
   import numpy as np
   import pandas as pd
   import matplotlib.pyplot as plt
   import seaborn as sns
-  import warnings
-  warnings.filterwarnings('ignore')
 ```
 - Loading the dataset
-``` python  
-df.head()
+``` python
+  df = pd.read_csv('Tweets.csv')
+  df.head()
 ```
+![image](https://github.com/user-attachments/assets/6a4004cd-acca-429c-9dc9-6c9ceaf79326)
 - Dimension and Shape of the dataset
 ``` python
-df.ndim
+  df.ndim
 ```
-
+![image](https://github.com/user-attachments/assets/2bdff19b-9bfd-4d10-b828-faf1960f1a3d)
 ``` python
 df.shape
 ```
-
+![image](https://github.com/user-attachments/assets/b71a28d0-73a4-4fb7-8466-fdd7ee84739c)
 - Information of the Dataset
 ``` python
 df.info()
 ```
+![image](https://github.com/user-attachments/assets/2d766618-8142-4bc8-bef2-a32e035938f2)
+- Data Cleaning and Pre-processing
+``` python
+   df.isna().sum()/len(df)*100
+```
+![image](https://github.com/user-attachments/assets/dfac95eb-0864-40c9-a282-a688ac59f056)
+``` python
+df.drop_duplicates(inplace = True)
+```
+``` python
+  df.drop('airline_sentiment_gold',axis = 1,inplace = True)
+  df.drop('negativereason_gold',axis = 1,inplace = True)
+  df.drop('tweet_coord',axis = 1, inplace = True)
+```
+``` python
+  df['negativereason'] = df['negativereason'].fillna('Others')
+  df['negativereason_confidence'] = df['negativereason_confidence'].fillna(df['negativereason_confidence'].mean())
+``` python
+  df['tweet_location'].fillna('No location',inplace = True)
+  df['user_timezone'].fillna('No Timezone',inplace = True)
+```
+``` python
+  df[['Sub_airline', 'Comments']] = df['text'].str.split(' ', n=1, expand=True)
+  correct_air = df['Sub_airline'] == df['airline']
+  correct_air.value_counts()
+```
+![image](https://github.com/user-attachments/assets/8313ffca-32ac-488f-95d9-db11f74e7ad6)
+``` python
+  df.drop('text',axis = 1, inplace = True)
+  df.drop('Sub_airline',axis = 1, inplace = True)
+  df.drop('Comments',axis = 1, inplace = True)
+```
+``` python
+  df.isna().sum()/len(df)*100
+```
+- Descriptive Statistics
+``` python
+  df.describe()
+```
+![image](https://github.com/user-attachments/assets/f075c519-857e-46c7-b359-378e093861b5)
+``` python
+  df.head()
+```
+![image](https://github.com/user-attachments/assets/6812260b-e0da-4b88-9fa7-d197ea3b1593)
 
-- Dropping unwanted columns for analysis
+1. **Customer Loyalty & Retention**
 ``` python
+  pd.crosstab(df['airline'],df['negativereason'])
+```
+![image](https://github.com/user-attachments/assets/55fa77eb-cc45-424b-9dc6-7912cf562188)
+``` python
+  fig = plt.figure(figsize=(15,8))
+  sns.countplot(x = 'airline',hue = 'negativereason',data = df)
+  plt.title('Count of Negative Reasons by Airline')
+  plt.xlabel('Airline')
+  plt.ylabel('Count')
+  plt.show()
+```
+![image](https://github.com/user-attachments/assets/11d78731-90b8-4751-90cb-c8ce030126cf)
+``` python
+  df['negativereason'].value_counts().plot(kind = 'bar',color = sns.color_palette('magma'))
+  plt.title('Reasons for Negative Tweet')
+  plt.xlabel('Negative reason')
+  plt.ylabel('Count')
+  plt.show()
+  print(df['negativereason'].value_counts().reset_index())
+```
+![image](https://github.com/user-attachments/assets/f99cb6fb-cbfb-4390-a794-70cfd58b3adb)
+![image](https://github.com/user-attachments/assets/109391b8-2e3d-4c33-9ce6-d6a81ce645a8)
+``` python
+  airline_sentiment_counts = df.groupby(['airline', 'airline_sentiment']).size().unstack(fill_value=0)
+  airline_sentiment_proportions = airline_sentiment_counts.apply(lambda x: x / x.sum()*100, axis=1)
 
+  # Highest proportion of positive sentiment tweets
+  most_positive_airline = airline_sentiment_proportions['positive'].idxmax()
+  print(f"Airline with highest proportion of positive tweets: {most_positive_airline}")
+
+  # Highest proportion of negative sentiment tweets
+  most_negative_airline = airline_sentiment_proportions['negative'].idxmax()
+  print(f"Airline with highest proportion of negative tweets: {most_negative_airline}")
+
+  # Optionally, display the full proportion table
+  print("\nProportion of sentiments per airline:")
+  print(airline_sentiment_proportions.reset_index())
+
+  figure=plt.figure(figsize=(15,8))
+  airline_sentiment_proportions.plot(kind = 'bar',color = sns.color_palette('tab10'))
+  plt.title('Airline Sentiment Proportion')
+  plt.xlabel('Airlines')
+  plt.xticks(rotation = 90)
+  plt.ylabel('Percentage')
+  plt.legend()
+  plt.show()
 ```
-- Checking for Null/Nan values in all the columns and rows
+![image](https://github.com/user-attachments/assets/b5321ef1-f574-451a-b772-d6c93f3d2306)
+![image](https://github.com/user-attachments/assets/9215ebc5-6014-4345-9825-a38f3ac7518b)
 ``` python
+  negative_tweets_df = df[df['airline_sentiment'] == 'negative']
+
+  # Plotting the distribution of airline_sentiment_confidence for negative tweets
+  plt.figure(figsize=(10, 6))
+  sns.histplot(negative_tweets_df['airline_sentiment_confidence'], bins=20, kde=True)
+  plt.title('Distribution of Airline Sentiment Confidence for Negative Tweets')
+  plt.xlabel('Airline Sentiment Confidence')
+  plt.ylabel('Count')
+  plt.show()
+
+  # Calculate the correlation between airline_sentiment_confidence and whether a tweet is negative
+  df['is_negative'] = (df['airline_sentiment'] == 'negative').astype(int)
+
+  # Calculating the correlation coefficient
+  correlation = df['airline_sentiment_confidence'].corr(df['is_negative'])
+  print(f"\nCorrelation between airline_sentiment_confidence and likelihood of a tweet being negative: {correlation}")
+
+  # Interpreting the correlation coefficient:
+  if correlation > 0.1:
+     print("There is a weak positive correlation, suggesting higher confidence might be slightly associated with negative tweets.")
+  elif correlation < -0.1:
+     print("There is a weak negative correlation, suggesting higher confidence might be slightly associated with non-negative tweets.")
+  else:
+     print("There is a very weak or no linear correlation.")
+
+  # Also, we can look at the mean confidence for different sentiment categories
+  mean_confidence_by_sentiment = df.groupby('airline_sentiment')['airline_sentiment_confidence'].mean()
+  print("\nMean Airline Sentiment Confidence by Sentiment")
+  print('\t')
+  mean_confidence_by_sentiment.reset_index()
 ```
+![image](https://github.com/user-attachments/assets/f37c1c0d-aad6-45e7-b76a-6dae2383ab3c)
+![image](https://github.com/user-attachments/assets/c3ad6ae4-db2f-4d34-bcc5-05185cb4f018)
+
+2. **Demographic & Geographic Analysis**
 ``` python
-df.duplicated().sum()
+  location_sentiment = df.groupby(['tweet_location', 'airline_sentiment']).size().unstack(fill_value=0)
+  timezone_sentiment = df.groupby(['user_timezone', 'airline_sentiment']).size().unstack(fill_value=0)
+
+  min_tweets = 50
+  location_sentiment_filtered = location_sentiment[(location_sentiment['negative'] + location_sentiment['neutral'] + location_sentiment['positive']) >= min_tweets]
+  timezone_sentiment_filtered = timezone_sentiment[(timezone_sentiment['negative'] + timezone_sentiment['neutral'] + timezone_sentiment['positive']) >= min_tweets]
+
+  print("\nSentiment distribution by Tweet Location (filtered for locations with >= 50 tweets):")
+  print(location_sentiment_filtered)
+
+  print("\nSentiment distribution by User Timezone (filtered for timezones with >= 50 tweets):")
+  print(timezone_sentiment_filtered)
 ```
-## Hypothesis testing:
+![image](https://github.com/user-attachments/assets/a2acf2bb-b435-4f39-98be-3bee9078c721)
+![image](https://github.com/user-attachments/assets/59289b22-17bb-4ffb-b56b-39af5a9e92a2)
+``` python
+  location_sentiment_proportions = location_sentiment_filtered.apply(lambda x: x / x.sum()*100, axis=1)
+  timezone_sentiment_proportions = timezone_sentiment_filtered.apply(lambda x: x / x.sum()*100, axis=1)
+
+  print("\nProportion of Sentiment by Tweet Location (filtered):")
+  print(location_sentiment_proportions.sort_values(by='negative', ascending=False).head(10))
+  print(location_sentiment_proportions.sort_values(by='positive', ascending=False).head(10))
+  print('\n')
+  print("\nProportion of Sentiment by User Timezone (filtered):")
+  print(timezone_sentiment_proportions.sort_values(by='negative', ascending=False).head(10))
+  print(timezone_sentiment_proportions.sort_values(by='positive', ascending=False).head(10))
+```
+![image](https://github.com/user-attachments/assets/9a104e92-6b9a-48ce-b34a-f5267865bfa2)
+![image](https://github.com/user-attachments/assets/44bdf53d-eff5-4b37-96af-67b78ae5efe7)
+``` python
+  location_negativereason = df.groupby(['tweet_location', 'negativereason']).size().unstack(fill_value=0)
+  timezone_negativereason = df.groupby(['user_timezone', 'negativereason']).size().unstack(fill_value=0)
+
+  min_negative_tweets_for_analysis = 50
+  location_negativereason_filtered = location_negativereason[location_negativereason.sum(axis=1) >= min_negative_tweets_for_analysis]
+  timezone_negativereason_filtered = timezone_negativereason[timezone_negativereason.sum(axis=1) >= min_negative_tweets_for_analysis]
+
+  print("\nDistribution of Negative Reasons by Tweet Location (filtered for locations with >= 50 negative tweets):")
+  print(location_negativereason_filtered.apply(lambda x: x / x.sum(), axis=1).head())
+
+  print("\nDistribution of Negative Reasons by User Timezone (filtered for timezones with >= 50 negative tweets):")
+  print(timezone_negativereason_filtered.apply(lambda x: x / x.sum(), axis=1).head())
+```
+![image](https://github.com/user-attachments/assets/64543ddb-5328-4d44-a674-a06bc30451cb)
+![image](https://github.com/user-attachments/assets/ca065ad8-2b54-4bc8-a680-3ff5d9497012)
+``` python
+  # To see if they vary significantly, we can look at the top reasons in different locations/timezones
+  print("\nTop negative reasons by location (showing top 5 locations by total negative tweets):")
+  for location in location_negativereason_filtered.sum(axis=1).sort_values(ascending=False).head(5).index:
+  print(f"\nLocation: {location}")
+  print(location_negativereason_filtered.loc[location].sort_values(ascending=False).head(5))
+
+  print("\nTop negative reasons by timezone (showing top 5 timezones by total negative tweets):")
+  for timezone in timezone_negativereason_filtered.sum(axis=1).sort_values(ascending=False).head(5).index:
+     print(f"\nTimezone: {timezone}")
+     print(timezone_negativereason_filtered.loc[timezone].sort_values(ascending=False).head(5))
+```
+![image](https://github.com/user-attachments/assets/67296a7c-a546-44e2-883e-6b99cccb0c76)
+![image](https://github.com/user-attachments/assets/054a41e9-a4fe-49e1-a34a-bbaabc7af382)
+![image](https://github.com/user-attachments/assets/43f63b04-3b00-45bd-b083-02ca371afb45)
+``` python
+  negative_reason_to_compare = 'Customer Service Issue'
+    if negative_reason_to_compare in location_negativereason_filtered.columns:
+    plt.figure(figsize=(15, 8))
+    location_negativereason_filtered.apply(lambda x: x / x.sum()*100, axis=1)[negative_reason_to_compare].sort_values(ascending=False).head(10).plot(kind='bar',color = 'orange')
+    plt.title(f'Proportion of "{negative_reason_to_compare}" by Location')
+    plt.xlabel('Tweet Location')
+    plt.ylabel('Proportion')
+    plt.xticks(rotation=90)
+    plt.show()
+
+  if negative_reason_to_compare in timezone_negativereason_filtered.columns:
+     plt.figure(figsize=(15, 8))
+     timezone_negativereason_filtered.apply(lambda x: x / x.sum()*100, axis=1)[negative_reason_to_compare].sort_values(ascending=False).head(10).plot(kind='bar',color = 'darkblue')
+     plt.title(f'Proportion of "{negative_reason_to_compare}" by Timezone')
+     plt.xlabel('User Timezone')
+     plt.ylabel('Proportion')
+     plt.xticks(rotation=90)
+     plt.show()
+```
+![image](https://github.com/user-attachments/assets/a47d13bb-25f5-48bb-b074-ec1b99daeb60)
+![image](https://github.com/user-attachments/assets/3ebd204e-ccbf-4c6f-9d78-33022e3fc0ec)
+``` python
+  airline_location_sentiment = df.groupby(['airline', 'tweet_location', 'airline_sentiment']).size().unstack(fill_value=0)
+  min_tweets_location_airline = 20
+  airline_location_sentiment_filtered = airline_location_sentiment[airline_location_sentiment.sum(axis=1) >= min_tweets_location_airline]
+  airline_location_sentiment_proportions = airline_location_sentiment_filtered.apply(lambda x: x / x.sum() * 100, axis=1)
+
+  # To Analyze sentiment for each airline in specific locations
+  for airline_to_analyze in airline_location_sentiment_proportions.index.get_level_values('airline').unique():
+      print(f"\nAnalyzing sentiment performance for {airline_to_analyze} in specific locations:")
+      airline_data = airline_location_sentiment_proportions.loc[airline_to_analyze]
+
+      # Locations with highest positive sentiment proportion for the airline
+      top_positive_locations = airline_data.sort_values(by='positive', ascending=False).head(10)
+      print(f"\nTop 10 locations for {airline_to_analyze} with highest positive sentiment proportion:")
+      print(top_positive_locations[['positive', 'negative', 'neutral']])
+
+      # Locations with highest negative sentiment proportion for the airline
+      top_negative_locations = airline_data.sort_values(by='negative', ascending=False).head(10)
+      print(f"\nTop 10 locations for {airline_to_analyze} with highest negative sentiment proportion:")
+      print(top_negative_locations[['positive', 'negative', 'neutral']])
+
+      if not top_positive_locations.empty:
+          plt.figure(figsize=(10, 8))
+          top_positive_locations[['positive', 'negative', 'neutral']].plot(kind='bar', stacked=True, ax=plt.gca(), color = sns.color_palette('Spectral'))
+          plt.title(f'Sentiment Distribution for {airline_to_analyze} in Top 10 Locations (by Positive Sentiment)')
+          plt.xlabel('Tweet Location')
+          plt.ylabel('Proportion (%)')
+          plt.xticks(rotation=90)
+          plt.legend(title='Sentiment')
+          plt.tight_layout()
+          plt.show()
+
+      if not top_negative_locations.empty:
+          plt.figure(figsize=(10, 8))
+          top_negative_locations[['positive', 'negative', 'neutral']].plot(kind='bar', stacked=True, ax=plt.gca(), color = sns.color_palette('flare'))
+          plt.title(f'Sentiment Distribution for {airline_to_analyze} in Top 10 Locations (by Negative Sentiment)')
+          plt.xlabel('Tweet Location')
+          plt.ylabel('Proportion (%)')
+          plt.xticks(rotation=90)
+          plt.legend(title='Sentiment')
+          plt.tight_layout()
+          plt.show()
+```
+![image](https://github.com/user-attachments/assets/99779867-6335-4c94-ac6f-c4fc542e2fde)
+![image](https://github.com/user-attachments/assets/b2b86b0f-3d98-4692-8cad-d199ff4fe870)
+![image](https://github.com/user-attachments/assets/984a8d96-778a-4427-8a46-c319ecbb5141)
+
+
+![image](https://github.com/user-attachments/assets/115f04cd-48ae-4950-9d66-c498013264fd)
+![image](https://github.com/user-attachments/assets/0d918237-6e88-4fc8-bb26-f9e9421e18f8)
+![image](https://github.com/user-attachments/assets/48fc4f24-4448-41db-b19b-9d4f1e8b3f3f)
+
+
+![image](https://github.com/user-attachments/assets/9d2deb6c-28f9-4e85-b7e3-9894700d1a0c)
+![image](https://github.com/user-attachments/assets/d88717b3-0da1-4875-83c7-1d008bb137ca)
+![image](https://github.com/user-attachments/assets/6f8b2b8f-4091-47e9-b57b-2a5e7d986ed9)
+
+
+![image](https://github.com/user-attachments/assets/c8c238b2-34c7-40b6-89df-39d055ede0b0)
+![image](https://github.com/user-attachments/assets/e8a5ebd7-9f4c-4a8f-b5be-a573797bb347)
+![image](https://github.com/user-attachments/assets/b0a82a38-9ba8-4f0f-9388-f78204e2ae09)
+
+
+![image](https://github.com/user-attachments/assets/3d77fbdd-7f9c-4827-a1c5-c52d2e0777d5)
+![image](https://github.com/user-attachments/assets/42cb5536-efe1-4035-be8c-0d1a8cdb82ad)
+![image](https://github.com/user-attachments/assets/127f2912-1c0f-4770-a2ce-65b940aab498)
+
+
+![image](https://github.com/user-attachments/assets/8251805d-d637-4382-a1db-fb7e14d9bd65)
+![image](https://github.com/user-attachments/assets/7d4bcdcf-5414-43a2-a9d2-e783c18f3170)
+![image](https://github.com/user-attachments/assets/fcb3d697-c872-478c-8f76-be9980d69efa)
+``` python
+  # To Analyze sentiment for each airline in specific timezones
+  airline_timezone_sentiment = df.groupby(['airline', 'user_timezone', 'airline_sentiment']).size().unstack(fill_value=0)
+  min_tweets_timezone_airline = 10
+  airline_timezone_sentiment_filtered = airline_timezone_sentiment[airline_timezone_sentiment.sum(axis=1) >= min_tweets_timezone_airline]
+  airline_timezone_sentiment_proportions = airline_timezone_sentiment_filtered.apply(lambda x: x / x.sum() * 100, axis=1)
+
+  for airline_to_analyze in airline_timezone_sentiment_proportions.index.get_level_values('airline').unique():
+      print(f"\nAnalyzing sentiment performance for {airline_to_analyze} in specific timezones:")
+
+      airline_data_tz = airline_timezone_sentiment_proportions.loc[airline_to_analyze]
+
+      # Timezones with highest positive sentiment proportion for the airline
+      top_positive_timezones = airline_data_tz.sort_values(by='positive', ascending=False).head(10)
+      print(f"\nTop 10 timezones for {airline_to_analyze} with highest positive sentiment proportion:")
+      print(top_positive_timezones[['positive', 'negative', 'neutral']])
+
+      # Timezones with highest negative sentiment proportion for the airline
+      top_negative_timezones = airline_data_tz.sort_values(by='negative', ascending=False).head(10)
+      print(f"\nTop 10 timezones for {airline_to_analyze} with highest negative sentiment proportion:")
+      print(top_negative_timezones[['positive', 'negative', 'neutral']])
+
+      if not top_positive_timezones.empty:
+          plt.figure(figsize=(15, 8))
+          top_positive_timezones[['positive', 'negative', 'neutral']].plot(kind='bar', stacked=True, ax=plt.gca(), color = sns.color_palette('viridis'))
+          plt.title(f'Sentiment Distribution for {airline_to_analyze} in Top 10 Timezones (by Positive Sentiment)')
+          plt.xlabel('User Timezone')
+          plt.ylabel('Proportion (%)')
+          plt.xticks(rotation=90)
+          plt.legend(title='Sentiment')
+          plt.tight_layout()
+          plt.show()
+
+      if not top_negative_timezones.empty:
+          plt.figure(figsize=(15, 8))
+          top_negative_timezones[['positive', 'negative', 'neutral']].plot(kind='bar', stacked=True, ax=plt.gca(), color = sns.color_palette('plasma'))
+          plt.title(f'Sentiment Distribution for {airline_to_analyze} in Top 10 Timezones (by Negative Sentiment)')
+          plt.xlabel('User Timezone')
+          plt.ylabel('Proportion (%)')
+          plt.xticks(rotation=90)
+          plt.legend(title='Sentiment')
+          plt.tight_layout()
+          plt.show()
+```
+![image](https://github.com/user-attachments/assets/d362c39e-7de8-4e58-ac97-0c39958a6cfc)
+![image](https://github.com/user-attachments/assets/dfffa998-fe50-4a60-a7b4-15d9f5de0ace)
+![image](https://github.com/user-attachments/assets/a6ce748e-fa85-4d8b-8850-644ff0cae14b)
+
+
+![image](https://github.com/user-attachments/assets/29cfa98f-bc4f-4964-8bf9-916d7c73a0f3)
+![image](https://github.com/user-attachments/assets/65488fb7-a2ee-47d4-8fc5-64c3fd45a5ea)
+![image](https://github.com/user-attachments/assets/d71dd0c8-7492-4bdb-b495-7c910b3d7e80)
+
+![image](https://github.com/user-attachments/assets/e102116f-b8d7-4e89-a20a-5b2840d1e52c)
+![image](https://github.com/user-attachments/assets/80243571-9056-4657-bebf-60f7ebd541b4)
+![image](https://github.com/user-attachments/assets/48c767bd-43e9-4356-b38c-854e00612a32)
+
+![image](https://github.com/user-attachments/assets/6f1d305a-1a3a-4613-bfe0-565703ce2711)
+![image](https://github.com/user-attachments/assets/9ec159a2-2262-461a-906f-b0ad4511bf2a)
+![image](https://github.com/user-attachments/assets/ab4c4a37-4865-405d-a10b-684ac387ca22)
+
+![image](https://github.com/user-attachments/assets/53125458-f991-4e41-8383-5a010eaec219)
+![image](https://github.com/user-attachments/assets/7f94400e-bbaf-4e88-a45a-b5aeda9b0b60)
+![image](https://github.com/user-attachments/assets/b21a2f5a-a2e1-48c3-b1cd-8e370102ef4f)
+
+![image](https://github.com/user-attachments/assets/a2266060-c4a0-46dc-97df-928629847c23)
+![image](https://github.com/user-attachments/assets/1eab1284-88ac-442f-87b6-9cd9d50d2fad)
+![image](https://github.com/user-attachments/assets/02a7a73d-9bc1-419a-b04c-a94f411a1cb1)
+``` python
+  timezone_tweet_volume = df['user_timezone'].value_counts().reset_index()
+  timezone_tweet_volume.columns = ['user_timezone', 'tweet_volume']
+
+  # Filter out 'No Timezone' if you don't want to include it in the visualization
+  timezone_tweet_volume_filtered = timezone_tweet_volume[timezone_tweet_volume['user_timezone'] != 'No Timezone']
+
+  top_n_timezones_volume = 20
+  plt.figure(figsize=(15, 8))
+  sns.barplot(x='user_timezone', y='tweet_volume', data=timezone_tweet_volume_filtered.head(top_n_timezones_volume), palette='viridis')
+  plt.title(f'Tweet Volume by User Timezone (Top {top_n_timezones_volume})')
+  plt.xlabel('User Timezone')
+  plt.ylabel('Number of Tweets')
+  plt.xticks(rotation=90)
+  plt.tight_layout()
+  plt.show()
+
+  timezone_sentiment_counts = df.groupby(['user_timezone', 'airline_sentiment']).size().unstack(fill_value=0)
+  min_tweets_for_sentiment_proportion = 100 # Adjust the threshold how much ever you need
+  timezone_sentiment_filtered_for_proportion = timezone_sentiment_counts[timezone_sentiment_counts.sum(axis=1) >= min_tweets_for_sentiment_proportion]
+  timezone_sentiment_proportions = timezone_sentiment_filtered_for_proportion.apply(lambda x: x / x.sum() * 100, axis=1)
+
+  top_n_timezones_sentiment = 15 # display of sentiment for top timezones by volume or based on filtered list size
+
+  plt.figure(figsize=(15, 8))
+  timezone_sentiment_proportions.head(top_n_timezones_sentiment)[['positive', 'neutral', 'negative']].plot(kind='bar', stacked=True, ax=plt.gca(), color=sns.color_palette('RdYlGn'))
+  plt.title(f'Sentiment Distribution by User Timezone (Top {top_n_timezones_sentiment} Timezones by Tweet Volume)')
+  plt.xlabel('User Timezone')
+  plt.ylabel('Proportion (%)')
+  plt.xticks(rotation=90)
+  plt.legend(title='Sentiment')
+  plt.tight_layout()
+  plt.show()
+
+  print("\nSentiment Proportion by User Timezone (filtered for timezones with >= {} tweets):".format(min_tweets_for_sentiment_proportion))
+  print(timezone_sentiment_proportions.sort_values(by='negative', ascending=False).head()) # Timezones with highest negative proportion
+  print(timezone_sentiment_proportions.sort_values(by='positive', ascending=False).head()) # Timezones with highest positive proportion
+```
+![image](https://github.com/user-attachments/assets/c8bb2126-ce71-4b3d-8efa-39029afd7965)
+![image](https://github.com/user-attachments/assets/d1cb9303-f29c-4bc4-bb11-8a456c26a140)
+![image](https://github.com/user-attachments/assets/21ba21f1-f35c-4ef9-8922-4a4163b381c5)
+
+3. **Program Effectiveness & Customer Behavior**
+``` python
+  tweet_retweet_sentiment = df.groupby('airline_sentiment')['retweet_count'].mean().reset_index()
+  print("\nAverage Retweet Count by Sentiment:")
+  print(tweet_retweet_sentiment)
+
+  plt.figure(figsize=(8, 6))
+  sns.barplot(x='airline_sentiment', y='retweet_count', data=tweet_retweet_sentiment, palette='viridis')
+  plt.title('Average Retweet Count by Sentiment')
+  plt.xlabel('Sentiment')
+  plt.ylabel('Average Retweet Count')
+  plt.show()
+```
+![image](https://github.com/user-attachments/assets/a5ecbbc2-36a2-45ac-920c-5f7ce3495628)
+``` python
+  sentiment_counts = df['airline_sentiment'].value_counts()
+  plt.figure(figsize=(8, 8))
+  plt.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', startangle=90, colors=['#FFCC17', '#F0561D', '#0066CC'])
+  plt.title('Distribution of Airline Sentiment')
+  plt.axis('equal') # Equal aspect ratio ensures that pie is drawn as a circle.
+  plt.show()
+```
+![image](https://github.com/user-attachments/assets/ddcf6e21-e921-4051-acbb-a8cdb4c80507)
+``` python
+  df['tweet_created'] = pd.to_datetime(df['tweet_created'])
+  negative_tweets_time = df[df['airline_sentiment'] == 'negative'].copy()
+
+  # Analyze negative tweets by day of the week
+  negative_tweets_time['day_of_week'] = negative_tweets_time['tweet_created'].dt.day_name()
+  negative_tweets_by_day = negative_tweets_time['day_of_week'].value_counts().reindex(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+
+  print("\nNegative tweets count by day of the week:")
+  print(negative_tweets_by_day)
+
+  plt.figure(figsize=(10, 6))
+  sns.barplot(x=negative_tweets_by_day.index, y=negative_tweets_by_day.values, palette='viridis')
+  plt.title('Negative Tweet Volume by Day of the Week')
+  plt.xlabel('Day of the Week')
+  plt.ylabel('Number of Negative Tweets')
+  plt.show()
+
+  # Analyze negative tweets by hour of the day (using the hour in UTC as the original data seems to be UTC)
+  negative_tweets_time['hour_of_day'] = negative_tweets_time['tweet_created'].dt.hour
+
+  negative_tweets_by_hour = negative_tweets_time['hour_of_day'].value_counts().sort_index()
+
+  print("\nNegative tweets count by hour of the day:")
+  print(negative_tweets_by_hour)
+  plt.figure(figsize=(12, 6))
+  sns.lineplot(x=negative_tweets_by_hour.index, y=negative_tweets_by_hour.values)
+  plt.title('Negative Tweet Volume by Hour of the Day (UTC)')
+  plt.xlabel('Hour of the Day (UTC)')
+  plt.ylabel('Number of Negative Tweets')
+  plt.xticks(range(0, 24))
+  plt.grid(True)
+  plt.show()
+
+  # To see if the _proportion_ of negative tweets changes by time, calculating total tweets by time period as well
+  all_tweets_time = df.copy()
+
+  all_tweets_time['day_of_week'] = all_tweets_time['tweet_created'].dt.day_name()
+
+  all_tweets_by_day = all_tweets_time['day_of_week'].value_counts().reindex(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+
+  all_tweets_time['hour_of_day'] = all_tweets_time['tweet_created'].dt.hour
+
+  all_tweets_by_hour = all_tweets_time['hour_of_day'].value_counts().sort_index()
+
+  negative_proportion_by_day = (negative_tweets_by_day / all_tweets_by_day).dropna()
+  print("\nProportion of negative tweets by day of the week:")
+  print(negative_proportion_by_day)
+  plt.figure(figsize=(12, 6))
+  sns.barplot(x=negative_proportion_by_day.index, y=negative_proportion_by_day.values, palette='plasma')
+  plt.title('Proportion of Negative Tweets by Day of the Week')
+  plt.xlabel('Day of the Week')
+  plt.ylabel('Proportion of Negative Tweets')
+  plt.show()
+
+  negative_proportion_by_hour = (negative_tweets_by_hour / all_tweets_by_hour).dropna()
+  print("\nProportion of negative tweets by hour of the day:")
+  print(negative_proportion_by_hour)
+
+  plt.figure(figsize=(12, 6))
+  sns.lineplot(x=negative_proportion_by_hour.index, y=negative_proportion_by_hour.values)
+  plt.title('Proportion of Negative Tweets by Hour of the Day (UTC)')
+  plt.xlabel('Hour of the Day (UTC)')
+  plt.ylabel('Proportion of Negative Tweets')
+  plt.xticks(range(0, 24))
+  plt.grid(True)
+  plt.show()
+```
+![image](https://github.com/user-attachments/assets/9592ccbd-244d-494b-813d-0eeb394c97aa)
+![image](https://github.com/user-attachments/assets/2f6b9f38-ae8b-4a03-87ee-d34ef480e345)
+
+![image](https://github.com/user-attachments/assets/c7d73d09-d755-4616-8e86-65d09dab033f)
+![image](https://github.com/user-attachments/assets/9f2f051b-0b89-4f9e-80ef-ecd769698e2c)
+
+![image](https://github.com/user-attachments/assets/1af8a24f-9213-46bc-9ea3-f13844becf3f)
+![image](https://github.com/user-attachments/assets/39842b5c-1bba-43b0-8357-6f1ea31ac8ad)
+
+![image](https://github.com/user-attachments/assets/e96e2ee0-00ee-4612-bcc1-03c2c70e8420)
+![image](https://github.com/user-attachments/assets/8175e8a4-89fb-49fb-b3ef-3bbe8dd297fd)
+
+### Hypothesis testing:
 1). 
 
 2). SQL
-A). 
+
 ### Insights
 - 
 ### Recommendations
