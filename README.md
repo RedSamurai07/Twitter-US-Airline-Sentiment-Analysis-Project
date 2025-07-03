@@ -11,7 +11,7 @@
 - [Recommendations](recommendations)
 
 ### Project Overview
-- The coffee shop industry is highly competitive, and optimizing sales, pricing, and customer behavior insights is crucial for business success. This project aims to analyze historical sales data to identify key trends, customer preferences, and factors influencing sales performance. The goal is to provide data-driven recommendations to enhance revenue, optimize inventory, and improve customer experience.
+- This project focuses on analyzing customer feedback from Twitter to understand sentiment towards major airlines. The dataset provides pre-classified sentiments (positive, neutral, negative) and, for negative feedback, specific reasons for dissatisfaction. This analysis aims to provide actionable insights for airlines to enhance customer service and operational efficiency.
 
 ### Executive Summary
 **Sales Department:**
@@ -28,15 +28,22 @@ The marketing team can utilize the findings to strategically plan special promot
 
 ### Goal
 The objective of this analysis is to:
+The primary goal is to leverage tweet data to understand public perception of airlines, identify key drivers of negative sentiment, and help airlines make data-driven decisions to improve customer satisfaction and service quality. This could involve building predictive models for sentiment or root cause analysis.
+
+- Sentiment Prediction
+- Negative Feedback Categorization 
+- Airline Performance Benchmarking
+- Actionable Insights for Operations
 
 ### Data structure and initial checks
-[Dataset](https://docs.google.com/spreadsheets/d/1GK4tnY4_YfX8ccNhVtedEoGpsUUGOwzlysEVEQr_xpA/edit?gid=1748548740#gid=1748548740)
+[Dataset](https://docs.google.com/spreadsheets/d/1EmudVOp_6vISH8C27vD4agJJEUKdFzSddlHsfkjXDeg/edit?gid=639920194#gid=639920194)
 
  - The initial checks of your transactions.csv dataset reveal the following:
 
 | Features | Description | Data types |
 | -------- | -------- | -------- | 
-| transaction_id | Unique identifier for each transaction. | int |
+| tweet_id | A unique numerical identifier for each tweet. | int |
+
 | date | Date when the transaction occurred (MM/DD/YYYY format). | object |
 | transaction_time | Time when the transaction was made (HH:MM:SS format).| object |
 | transaction_qty  | Number of units purchased in the transaction. | int |
