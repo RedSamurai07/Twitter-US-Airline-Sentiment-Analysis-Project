@@ -1,4 +1,4 @@
-# Twitter-US-Airline-Sentiment-Analysis-Project
+![image](https://github.com/user-attachments/assets/0935a3dd-960a-46ab-9d81-b8d606fb4cce)# Twitter-US-Airline-Sentiment-Analysis-Project
 
 ## Table of contents
 - [Project Overview](#project-overview)
@@ -590,11 +590,432 @@ df.drop_duplicates(inplace = True)
 ![image](https://github.com/user-attachments/assets/8175e8a4-89fb-49fb-b3ef-3bbe8dd297fd)
 
 ### Hypothesis testing:
-1). 
+1). Customer Loyalty & Retention
+- What are the most frequently cited negativereasons across all airlines?
+``` python
+  # Null Hypothesis (H0): The frequency of negativereasons is uniformly distributed across all possible negative reasons.
+  # Alternative Hypothesis (H1): The frequency of negativereasons is not uniformly distributed, with certain reasons being cited significantly more often than others.
 
-2). SQL
+  from scipy.stats import chi2_contingency
+  from scipy.stats import chisquare
+
+  # Chi-Squared Test for Uniform Distribution of Negative Reasons
+  observed_frequencies = df['negativereason'].value_counts()
+  observed_table = pd.DataFrame({'observed': observed_frequencies}).T
+  total_negative_reasons = observed_frequencies.sum()
+  num_unique_reasons = len(observed_frequencies)
+
+  expected_frequency_per_reason = total_negative_reasons / num_unique_reasons
+  expected_frequencies = np.full(num_unique_reasons, expected_frequency_per_reason)
+
+  chi2_stat, p_value = chisquare(f_obs=observed_frequencies, f_exp=expected_frequencies)
+
+
+  print("\nChi-Squared Test for Uniform Distribution of Negative Reasons")
+  print(f"Observed Frequencies:\n{observed_frequencies}")
+  print(f"Expected Frequency (under H0): {expected_frequency_per_reason:.2f} for each reason")
+  print('\n')
+  print(f"Chi-squared statistic: {chi2_stat:.4f}")
+  print(f"P-value: {p_value:.4f}")
+
+  alpha = 0.05
+   if p_value < alpha:
+      print(f"\nConclusion: With a p-value of {p_value:.4f} (less than alpha={alpha}), we reject the null hypothesis.")
+      print("There is sufficient evidence to suggest that the frequency of negative reasons is not uniformly distributed.")
+   else:
+      print(f"\nConclusion: With a p-value of {p_value:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis.")
+      print("There is not enough evidence to suggest that the frequency of negative reasons is not uniformly distributed. The observed distribution is consistent with a uniform distribution.")
+```
+![image](https://github.com/user-attachments/assets/b59cfacc-1c7d-4690-8874-0456038101b9)
+- Which airlines receive the highest proportion of negative sentiment tweets, and which receive the most positive?
+``` python
+  # Null Hypothesis (H0): There is no significant difference in the proportion of negative (or positive) sentiment tweets across different airlines.
+  # Alternative Hypothesis (H1): There is a significant difference in the proportion of negative (or positive) sentiment tweets among different airlines.
+
+  contingency_table = pd.crosstab(df['airline'], df['airline_sentiment'])
+  print("\nContingency Table (Airline vs. Sentiment):")
+  print(contingency_table)
+  chi2_stat, p_value, dof, expected = chi2_contingency(contingency_table)
+
+  print("\nChi-Squared Test for Independence (Airline vs. Sentiment)")
+  print(f"Chi-squared statistic: {chi2_stat:.4f}")
+  print(f"P-value: {p_value:.4f}")
+  print(f"Degrees of Freedom: {dof}")
+
+  alpha = 0.05  
+  if p_value < alpha:
+     print(f"\nConclusion: With a p-value of {p_value:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+     print("There is sufficient evidence to suggest that there is a significant difference in the proportion of sentiment tweets across different airlines.")
+  else:
+     print(f"\nConclusion: With a p-value of {p_value:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+     print("There is not enough evidence to suggest a significant difference in the proportion of sentiment tweets across different airlines. The observed distribution is consistent with independence between    airline and sentiment.")
+```
+![image](https://github.com/user-attachments/assets/8e3f2c36-5c29-430b-880e-9440ec4f72af)
+- Is there a correlation between the airline_sentiment_confidence and the likelihood of a tweet being negative?
+``` python
+  # Null Hypothesis (H0): There is no statistical correlation between airline_sentiment_confidence and the likelihood of a tweet being negative.
+  # Alternative Hypothesis (H1): There is a statistical correlation between airline_sentiment_confidence and the likelihood of a tweet being negative.
+  from scipy.stats import pearsonr
+  correlation, p_value_correlation = pearsonr(df['airline_sentiment_confidence'], df['is_negative'])
+
+  print("\nFormal Test for Correlation between Airline Sentiment Confidence and Likelihood of being Negative")
+  print(f"Pearson correlation coefficient: {correlation:.4f}")
+  print(f"P-value for the correlation test: {p_value_correlation:.4f}")
+
+  alpha = 0.05
+  if p_value_correlation < alpha:
+     print(f"\nConclusion: With a p-value of {p_value_correlation:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+     print("There is sufficient evidence to suggest a statistically significant correlation between airline_sentiment_confidence and the likelihood of a tweet being negative.")
+  else:
+    print(f"\nConclusion: With a p-value of {p_value_correlation:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+    print("There is not enough evidence to suggest a statistically significant correlation between airline_sentiment_confidence and the likelihood of a tweet being negative.")
+
+  if abs(correlation) >= 0.5:
+      strength = "strong"
+  elif abs(correlation) >= 0.3:
+      strength = "moderate"
+  elif abs(correlation) >= 0.1:
+      strength = "weak"
+  else:
+     strength = "very weak or no"
+
+  direction = "positive" if correlation > 0 else "negative" if correlation < 0 else "no"
+  print(f"The correlation coefficient ({correlation:.4f}) indicates a {strength} {direction} linear relationship.")
+```
+![image](https://github.com/user-attachments/assets/fb0303b9-37f2-4924-956f-0760aa78531f)
+
+2. Demographic & Geographic Analysis
+- Are there specific tweet_locations or user_timezones that show a higher concentration of negative or positive sentiment tweets for particular airlines?
+``` python
+  # Null Hypothesis (H0): The distribution of sentiment (negative/positive) for a given airline is independent of tweet_location and user_timezone.
+  # Alternative Hypothesis (H1): The distribution of sentiment (negative/positive) for a given airline is dependent on tweet_location or user_timezone, indicating a higher concentration of specific sentiments in   certain areas/timezones.
+
+  min_combined_tweets = 100
+  for airline_name in df['airline'].unique():
+  print(f"\nTesting for {airline_name}")
+  airline_df = df[df['airline'] == airline_name].copy()
+  airline_df['location_timezone'] = airline_df['tweet_location'] + ' | ' + airline_df['user_timezone']
+  contingency_table_combined = pd.crosstab(airline_df['location_timezone'], airline_df['airline_sentiment'])
+  contingency_table_filtered = contingency_table_combined[contingency_table_combined.sum(axis=1) >= min_combined_tweets]
+
+  if not contingency_table_filtered.empty and contingency_table_filtered.shape[0] > 1 and contingency_table_filtered.shape[1] > 1:
+
+    print(f"\nPerforming Chi-Squared test for {airline_name} (filtered for location-timezone combinations with >= {min_combined_tweets} tweets)")
+    chi2_stat, p_value, dof, expected = chi2_contingency(contingency_table_filtered)
+
+    print(f"Chi-squared statistic: {chi2_stat:.4f}")
+    print(f"P-value: {p_value:.4f}")
+    print(f"Degrees of Freedom: {dof}")
+
+    alpha = 0.05
+    if p_value < alpha:
+      print(f"\nConclusion for {airline_name}: With a p-value of {p_value:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+      print(f"There is sufficient evidence to suggest that the distribution of sentiment for {airline_name} is dependent on tweet_location or user_timezone.")
+  else:
+      print(f"\nConclusion for {airline_name}: With a p-value of {p_value:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+      print(f"There is not enough evidence to suggest that the distribution of sentiment for {airline_name} is dependent on tweet_location or user_timezone. The observed distribution is consistent with independence.")
+    else:
+       print(f"\nNot enough data for {airline_name} to perform a reliable Chi-Squared test on the combined location/timezone and sentiment relationship with the applied filter.")
+       print(f"Filtered table shape: {contingency_table_filtered.shape}")
+```
+![image](https://github.com/user-attachments/assets/05bb6a6f-ec5d-4b88-87f8-030a8ed8d114)
+- Do the common negativereasons vary significantly by geographic region or user timezone?
+``` python
+  # Null Hypothesis (H0): The distribution of sentiment (negative/positive) for a given airline is independent of tweet_location and user_timezone.
+  # Alternative Hypothesis (H1): The distribution of sentiment (negative/positive) for a given airline is dependent on tweet_location or user_timezone, indicating a higher concentration of specific sentiments in   certain areas/timezones.
+
+  negative_df = df[df['airline_sentiment'] == 'negative'].copy()
+  min_timezone_negative_tweets = 50
+  min_negativereason_count = 20
+
+  timezone_reason_contingency = pd.crosstab(negative_df['user_timezone'], negative_df['negativereason'])
+  timezone_reason_contingency_filtered_tz = timezone_reason_contingency[timezone_reason_contingency.sum(axis=1) >= min_timezone_negative_tweets]
+
+  timezone_reason_contingency_filtered = timezone_reason_contingency_filtered_tz.loc[:, timezone_reason_contingency_filtered_tz.sum(axis=0) >= min_negativereason_count]
+
+  print("\nContingency Table (User Timezone vs. Negative Reason - filtered):")
+  print(timezone_reason_contingency_filtered.head()) # Print head as the table can be large
+
+  if not timezone_reason_contingency_filtered.empty and timezone_reason_contingency_filtered.shape[0] > 1 and timezone_reason_contingency_filtered.shape[1] > 1:
+    print("\nPerforming Chi-Squared Test for Independence (User Timezone vs. Negative Reason)")
+    chi2_stat, p_value, dof, expected = chi2_contingency(timezone_reason_contingency_filtered)
+
+    print(f"Chi-squared statistic: {chi2_stat:.4f}")
+    print(f"P-value: {p_value:.4f}")
+    print(f"Degrees of Freedom: {dof}")
+
+    alpha = 0.05
+    if p_value < alpha:
+       print(f"\nConclusion: With a p-value of {p_value:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+       print("There is sufficient evidence to suggest that the distribution of common negative reasons varies significantly by user_timezone.")
+    else:
+       print(f"\nConclusion: With a p-value of {p_value:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+       print("There is not enough evidence to suggest that the distribution of common negative reasons varies significantly by user_timezone. The observed distribution is consistent with independence.")
+  else:
+     print("\nNot enough data in the filtered contingency table (User Timezone vs. Negative Reason) to perform a reliable Chi-Squared test.")
+     print(f"Filtered table shape: {timezone_reason_contingency_filtered.shape}")
+```
+![image](https://github.com/user-attachments/assets/fc1c63f7-143d-49ad-9fff-ea322294b60a)
+- Which airlines demonstrate stronger or weaker sentiment performance in specific geographic areas?
+``` python
+  min_location_tweets = 50
+  print("\nTesting Sentiment Performance across Geographic Areas (Tweet Location) for each Airline")
+
+  for airline_name in df['airline'].unique():
+    print(f"\nAnalyzing Sentiment Performance for {airline_name} across Tweet Locations:")
+    airline_df = df[df['airline'] == airline_name].copy()
+    location_sentiment_contingency = pd.crosstab(airline_df['tweet_location'], airline_df['airline_sentiment'])
+    location_sentiment_contingency_filtered = location_sentiment_contingency[location_sentiment_contingency.sum(axis=1) >= min_location_tweets]
+    if not location_sentiment_contingency_filtered.empty and location_sentiment_contingency_filtered.shape[0] > 1 and location_sentiment_contingency_filtered.shape[1] > 1:
+
+    print(f"Performing Chi-Squared test for {airline_name} (filtered for locations with >= {min_location_tweets} tweets)")
+    chi2_stat, p_value, dof, expected = chi2_contingency(location_sentiment_contingency_filtered)
+
+    print(f"Chi-squared statistic: {chi2_stat:.4f}")
+    print(f"P-value: {p_value:.4f}")
+    print(f"Degrees of Freedom: {dof}")
+
+    alpha = 0.05
+    if p_value < alpha:
+      print(f"\nConclusion for {airline_name}: With a p-value of {p_value:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+      print(f"There is sufficient evidence to suggest that the sentiment performance for {airline_name} varies significantly across different tweet_locations.")
+    else:
+      print(f"\nConclusion for {airline_name}: With a p-value of {p_value:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+      print(f"There is not enough evidence to suggest a significant variation in sentiment performance for {airline_name} across different tweet_locations. The observed distribution is consistent with sentiment        performance being independent of location.")
+  else:
+    print(f"Not enough data for {airline_name} in the filtered contingency table (Tweet Location vs. Sentiment) to perform a reliable Chi-Squared test.")
+    print(f"Filtered table shape: {location_sentiment_contingency_filtered.shape}")
+```
+![image](https://github.com/user-attachments/assets/9161c790-0dc5-4604-9742-018cf6827840)
+- How does the volume of tweets and the sentiment distribution differ across various user_timezones?
+``` python
+  min_tweets_for_chi2 = 100
+  timezone_sentiment_contingency = pd.crosstab(df['user_timezone'], df['airline_sentiment'])
+  timezone_sentiment_contingency_filtered = timezone_sentiment_contingency[timezone_sentiment_contingency.sum(axis=1) >= min_tweets_for_chi2]
+  print("\nContingency Table (User Timezone vs. Sentiment - filtered for timezones with >= {} tweets):".format(min_tweets_for_chi2))
+  print(timezone_sentiment_contingency_filtered.head())
+
+  # Performing the Chi-Squared Test for Independence
+  if not timezone_sentiment_contingency_filtered.empty and timezone_sentiment_contingency_filtered.shape[0] > 1 and timezone_sentiment_contingency_filtered.shape[1] > 1:
+    chi2_stat_sentiment, p_value_sentiment, dof_sentiment, expected_sentiment = chi2_contingency(timezone_sentiment_contingency_filtered)
+
+    print("\nChi-Squared Test for Independence (User Timezone vs. Sentiment Distribution)")
+    print(f"Chi-squared statistic: {chi2_stat_sentiment:.4f}")
+    print(f"P-value: {p_value_sentiment:.4f}")
+    print(f"Degrees of Freedom: {dof_sentiment}")
+
+    alpha = 0.05
+    if p_value_sentiment < alpha:
+      print(f"\nConclusion: With a p-value of {p_value_sentiment:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+      print("There is sufficient evidence to suggest that the sentiment distribution differs significantly across user timezones.")
+    else:
+      print(f"\nConclusion: With a p-value of {p_value_sentiment:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+      print("There is not enough evidence to suggest a significant difference in sentiment distribution across user timezones. The observed distribution is consistent with sentiment distribution being   independent of timezone.")
+  else:
+    print("\nNot enough data in the filtered contingency table (User Timezone vs. Sentiment) to perform a reliable Chi-Squared test.")
+    print(f"Filtered table shape: {timezone_sentiment_contingency_filtered.shape}")
+
+  # Test 2: Chi-Squared Test for Uniform Distribution of Tweet Volume across Timezones (considering only significant timezones)
+  timezone_tweet_volume_filtered = timezone_sentiment_contingency_filtered.sum(axis=1)
+
+  if not timezone_tweet_volume_filtered.empty and len(timezone_tweet_volume_filtered) > 1:
+    observed_tweet_volumes = timezone_tweet_volume_filtered.values
+    total_volume_filtered = observed_tweet_volumes.sum()
+    num_timezones_filtered = len(observed_tweet_volumes)
+    expected_volume_per_timezone = total_volume_filtered / num_timezones_filtered
+    expected_tweet_volumes = np.full(num_timezones_filtered, expected_volume_per_timezone)
+
+    # Perform the Chi-Squared Test for Uniformity
+    chi2_stat_volume, p_value_volume = chisquare(f_obs=observed_tweet_volumes, f_exp=expected_tweet_volumes)
+
+    print("\nChi-Squared Test for Uniform Distribution of Tweet Volume across Filtered User Timezones")
+    print(f"Observed Tweet Volumes:\n{timezone_tweet_volume_filtered.head()}") # Print head as this can be long
+    print(f"Expected Tweet Volume (under H0): {expected_volume_per_timezone:.2f} for each timezone")
+    print('\n')
+    print(f"Chi-squared statistic: {chi2_stat_volume:.4f}")
+    print(f"P-value: {p_value_volume:.4f}")
+    alpha = 0.05
+    if p_value_volume < alpha:
+      print(f"\nConclusion: With a p-value of {p_value_volume:.4f} (less than alpha={alpha}), we reject the null hypothesis.")
+      print("There is sufficient evidence to suggest that the tweet volume is not uniformly distributed across the filtered user timezones.")
+    else:
+      print(f"\nConclusion: With a p-value of {p_value_volume:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis.")
+      print("There is not enough evidence to suggest that the tweet volume is not uniformly distributed across the filtered user timezones. The observed distribution is consistent with a uniform distribution.")
+
+  else:
+      print("\nNot enough data in the filtered list of timezones to perform a reliable Chi-Squared test for uniform volume.")
+      print(f"Number of filtered timezones: {len(timezone_tweet_volume_filtered)}")
+
+  print("\nOverall Hypothesis Test Conclusion (Timezone vs. Tweet Volume and Sentiment)")
+  alpha = 0.05
+  if p_value_sentiment < alpha or p_value_volume < alpha:
+      print("Based on the Chi-Squared tests for sentiment distribution and tweet volume, we reject the Null Hypothesis (H0).")
+      print("There is significant evidence to suggest that the volume of tweets and/or the sentiment distribution differ across user_timezones.")
+  else:
+      print("Based on the Chi-Squared tests, we fail to reject the Null Hypothesis (H0).")
+      print("There is not enough evidence to suggest that the volume of tweets or the sentiment distribution differ significantly across user_timezones.")
+```
+![image](https://github.com/user-attachments/assets/45742bdc-b240-4000-9709-b69a5141c2db)
+![image](https://github.com/user-attachments/assets/b28d7efe-ebab-4d3c-abf9-09a511ca738d)
+
+3. Program Effectiveness & Customer Behavior
+How does the retweet_count differ for tweets with positive, neutral, and negative sentiments?
+``` python
+  # Null Hypothesis (H0): There is no significant difference in the mean retweet_count among tweets with positive, neutral, and negative sentiments.
+  # Alternative Hypothesis (H1): There is a significant difference in the mean retweet_count among tweets with positive, neutral, and negative sentiments.
+
+  import statsmodels.api as sm
+  from statsmodels.formula.api import ols
+  from statsmodels.stats.multicomp import pairwise_tukeyhsd
+
+  model = ols('retweet_count ~ C(airline_sentiment)', data=df).fit()
+  anova_table = sm.stats.anova_lm(model, typ=2) # typ=2 for unbalanced data
+  print("\nANOVA Test for Retweet Count by Sentiment:")
+  print(anova_table)
+
+  alpha = 0.05
+  p_value_anova = anova_table['PR(>F)'][0]
+  if p_value_anova < alpha:
+    print(f"\nConclusion: With a p-value of {p_value_anova:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+    print("There is sufficient evidence to suggest that there is a significant difference in the mean retweet_count among tweets with positive, neutral, and negative sentiments.")
+
+    # Perform Tukey's HSD post-hoc test to see which pairs of sentiments differ
+    print("\nPerforming Tukey's HSD Post-Hoc Test:")
+    tukey_result = pairwise_tukeyhsd(endog=df['retweet_count'], groups=df['airline_sentiment'], alpha=alpha)
+    print(tukey_result)
+    print("\nInterpretation of Tukey's HSD:")
+    print("The 'reject' column indicates if the difference between the means of the two groups (group1 vs group2) is statistically significant (True means significant difference).")
+  else:
+    print(f"\nConclusion: With a p-value of {p_value_anova:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+    print("There is not enough evidence to suggest a significant difference in the mean retweet_count among tweets with positive, neutral, and negative sentiments.")
+    correlation_hour_retweet, p_value_hour_retweet = pearsonr(df['tweet_created'].dt.hour, df['retweet_count'])
+
+    print("\nPearson Correlation between Hour of Day (UTC) and Retweet Count")
+    print(f"Correlation coefficient: {correlation_hour_retweet:.4f}")
+    print(f"P-value: {p_value_hour_retweet:.4f}")
+
+  alpha = 0.05
+  if p_value_hour_retweet < alpha:
+      print("Conclusion: Significant linear correlation between hour of day and retweet count.")
+  else:
+      print("Conclusion: No significant linear correlation between hour of day and retweet count.")
+
+  # For day of the week and retweet count (ANOVA)
+  if not df.empty:
+      df['day_of_week_num'] = df['tweet_created'].dt.dayofweek # Monday=0, Sunday=6
+      day_anova_model = ols('retweet_count ~ C(day_of_week_num)', data=df).fit()
+      day_anova_table = sm.stats.anova_lm(day_anova_model, typ=2)
+
+      print("\nANOVA Test for Retweet Count by Day of the Week:")
+      print(day_anova_table)
+
+      p_value_day_anova = day_anova_table['PR(>F)'][0]
+
+      if p_value_day_anova < alpha:
+          print(f"\nConclusion: With a p-value of {p_value_day_anova:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+          print("There is sufficient evidence to suggest that there is a significant difference in the mean retweet_count across different days of the week.")
+      else:
+          print(f"\nConclusion: With a p-value of {p_value_day_anova:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+          print("There is not enough evidence to suggest a significant difference in the mean retweet_count across different days of the week.")
+  else:
+      print("DataFrame is empty, cannot perform ANOVA by Day of the Week.")
+
+  # For timing of tweets and sentiment distribution (Chi-Squared)
+  # Day of the week vs. Sentiment
+  contingency_table_day_sentiment = pd.crosstab(df['tweet_created'].dt.day_name(), df['airline_sentiment'])
+  contingency_table_day_sentiment = contingency_table_day_sentiment.reindex(index=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+
+  if not contingency_table_day_sentiment.empty and contingency_table_day_sentiment.shape[0] > 1 and contingency_table_day_sentiment.shape[1] > 1:
+      chi2_stat_day_sentiment, p_value_day_sentiment, dof_day_sentiment, expected_day_sentiment = chi2_contingency(contingency_table_day_sentiment)
+
+      print("\nChi-Squared Test for Independence (Day of Week vs. Sentiment)")
+      print(f"Chi-squared statistic: {chi2_stat_day_sentiment:.4f}")
+      print(f"P-value: {p_value_day_sentiment:.4f}")
+      print(f"Degrees of Freedom: {dof_day_sentiment}")
+
+      alpha = 0.05
+      if p_value_day_sentiment < alpha:
+          print(f"\nConclusion: With a p-value of {p_value_day_sentiment:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+          print("There is sufficient evidence to suggest that the sentiment distribution differs significantly across different days of the week.")
+      else:
+          print(f"\nConclusion: With a p-value of {p_value_day_sentiment:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+          print("There is not enough evidence to suggest a significant difference in sentiment distribution across different days of the week.")
+  else:
+      print("Not enough data in the contingency table (Day of Week vs. Sentiment) to perform a reliable Chi-Squared test.")
+      print(f"Table shape: {contingency_table_day_sentiment.shape}")
+
+  # Hour of the day vs. Sentiment
+  contingency_table_hour_sentiment = pd.crosstab(df['tweet_created'].dt.hour, df['airline_sentiment'])
+  min_tweets_per_hour = 10
+  contingency_table_hour_sentiment_filtered = contingency_table_hour_sentiment[contingency_table_hour_sentiment.sum(axis=1) >= min_tweets_per_hour]
+
+
+  if not contingency_table_hour_sentiment_filtered.empty and contingency_table_hour_sentiment_filtered.shape[0] > 1 and contingency_table_hour_sentiment_filtered.shape[1] > 1:
+      chi2_stat_hour_sentiment, p_value_hour_sentiment, dof_hour_sentiment, expected_hour_sentiment = chi2_contingency(contingency_table_hour_sentiment_filtered)\
+      print("\nChi-Squared Test for Independence (Hour of Day vs. Sentiment - filtered)")
+      print(f"Chi-squared statistic: {chi2_stat_hour_sentiment:.4f}")
+      print(f"P-value: {p_value_hour_sentiment:.4f}")
+      print(f"Degrees of Freedom: {dof_hour_sentiment}")
+
+      alpha = 0.05
+      if p_value_hour_sentiment < alpha:
+          print(f"\nConclusion: With a p-value of {p_value_hour_sentiment:.4f} (less than alpha={alpha}), we reject the null hypothesis (H0).")
+          print("There is sufficient evidence to suggest that the sentiment distribution differs significantly across different hours of the day.")
+      else:
+          print(f"\nConclusion: With a p-value of {p_value_hour_sentiment:.4f} (greater than or equal to alpha={alpha}), we fail to reject the null hypothesis (H0).")
+          print("There is not enough evidence to suggest a significant difference in sentiment distribution across different hours of the day.")
+  else:
+      print("\nNot enough data in the filtered contingency table (Hour of Day vs. Sentiment) to perform a reliable Chi-Squared test.")
+      print(f"Filtered table shape: {contingency_table_hour_sentiment_filtered.shape}")
+```
+![image](https://github.com/user-attachments/assets/17ca8f3b-3c04-4401-967a-483c12b64ee3)
+![image](https://github.com/user-attachments/assets/e07cf5d3-cb2e-434f-82a5-74521eb0c249)
+
+- Are there specific days or times (tweet_created) when negative sentiment tweets are more prevalent, suggesting periods of heightened
+``` python
+  # Null Hypothesis (H0): The proportion of negative sentiment tweets is consistent across different days of the week and times of the day.
+  # Alternative Hypothesis (H1): The proportion of negative sentiment tweets is significantly higher on certain days of the week or during specific times of the day.
+
+  print("\nOverall Hypothesis Test Conclusion (Timing of Negative Sentiment)")
+  alpha = 0.05
+  if p_value_day_sentiment < alpha or p_value_hour_sentiment < alpha:
+      print("Based on the Chi-Squared tests, we reject the Null Hypothesis (H0).")
+      print("There is sufficient evidence to suggest that the proportion of negative sentiment tweets varies significantly across different days of the week and/or times of the day.")
+      print("This supports the Alternative Hypothesis (H1) that negative sentiment is significantly higher on certain days or times.")
+  else:
+      print("Based on the Chi-Squared tests, we fail to reject the Null Hypothesis (H0).")
+      print("There is not enough evidence to suggest that the proportion of negative sentiment tweets varies significantly across different days of the week or times of the day.")
+      print("The observed distribution is consistent with the Null Hypothesis (H0) that the proportion is consistent.")
+  ```
+![image](https://github.com/user-attachments/assets/5648f870-18a0-4802-a2b0-dd1c94f02067)
 
 ### Insights
-- 
+
+
+
 ### Recommendations
-- 
+**1. Recommendations for Customer Loyalty & Retention:**
+
+- Prioritize Addressing Top Negative Reasons: Focus resources on resolving the  most frequently cited negative reasons (e.g., "Late Flight," "Customer Service Issue," "Cancelled Flight"). Quantify the financial or reputational impact of these issues to prioritize effectively.
+
+- Highlight Positive Aspects: Identify and amplify the specific factors that drive positive sentiment. Use these as marketing strengths if certain aspects of in-flight service or booking experience consistently receive positive feedback.
+
+- Monitor Sentiment Confidence: Investigate tweets with low airline_sentiment_confidence, especially negative ones, to understand why the sentiment is ambiguous. This could indicate nuanced issues or sarcasm that require more sophisticated sentiment analysis or manual review.
+
+**2. Recommendations for Demographic & Geographic Analysis:**
+
+- Tailor Regional Strategies: If certain user_timezones or tweet_locations show a disproportionately high concentration of negative sentiment, investigate local operational issues, ground staff training, or specific regional challenges. Conversely, replicate best practices from areas with high positive sentiment.
+
+- Localize Communication: Adjust communication strategies based on negativereasons prevalent in specific geographic regions or timezones. For example, if "Lost Luggage" is a major issue in a particular region, ensure local communication channels and staff are well-equipped to handle such inquiries.
+
+- Identify Underperforming/Outperforming Regions: Pinpoint specific geographic areas where an airline performs significantly weaker or stronger in terms of sentiment. Use this information for targeted service improvements or marketing campaigns.
+
+**3. Recommendations for Program Effectiveness & Customer Behavior:**
+
+- Negative Tweets with High Retweet Counts: Prioritize immediate public and private responses to mitigate further damage. Analyze their content to identify root causes needing urgent attention.
+
+- Positive Tweets with High Retweet Counts: Actively engage with these users, retweet their positive feedback, and potentially use their testimonials in marketing efforts to amplify positive brand messaging.
+
+- Optimize Staffing and Operations for Peak Frustration Times: If the analysis reveals specific days or hours with a higher prevalence of negative sentiment tweets, consider adjusting customer service staffing levels, technical support availability, or operational procedures during these "peak frustration" periods.
+
+- Proactive Communication during Peak Negative Times: During periods identified with heightened negative sentiment, consider proactive communication strategies (e.g., automated updates on potential delays, tips for common issues) to manage customer expectations and reduce the volume of negative tweets.
