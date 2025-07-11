@@ -14,30 +14,29 @@
 - This project focuses on analyzing customer feedback from Twitter to understand sentiment towards major airlines. The dataset provides pre-classified sentiments (positive, neutral, negative) and, for negative feedback, specific reasons for dissatisfaction. This analysis aims to provide actionable insights for airlines to enhance customer service and operational efficiency.
 
 ### Executive Summary
-This analysis of Twitter interactions provides critical insights into customer sentiment, common pain points, and behavioral patterns, equipping various airline departments with actionable intelligence to enhance service, optimize operations, and refine strategic initiatives.
+- This analysis of Twitter interactions provides critical insights into customer sentiment, common pain points, and behavioral patterns, equipping various airline departments with actionable intelligence to enhance service, optimize operations, and refine strategic initiatives.
 
 **Overall Findings:**
-The data reveals a prevalent negative sentiment towards airlines, primarily driven by customer service and operational failures. While negative feedback is widespread across locations and timezones, most individual complaints do not gain significant traction through retweets. Significant data gaps exist in location and timezone information, limiting granular analysis.
+- The data reveals a prevalent negative sentiment towards airlines, primarily driven by customer service and operational failures. While negative feedback is widespread across locations and timezones, most individual complaints do not gain significant traction through retweets. Significant data gaps exist in location and timezone information, limiting granular analysis.
 
-**Customer Service Department:**
-This analysis provides the customer service team with a clear understanding of the most frequent complaints, including core "Customer Service Issues" and "Miscellaneous" problems (e.g., online cancellation difficulties, food service, long wait times). It identifies peak hours and days (mornings, nights, Sundays) for customer dissatisfaction, enabling optimized staffing and proactive engagement. Regional hotspots for negative sentiment (e.g., Washington D.C., NYC, Chicago) and specific issues within those areas (e.g., flight attendant complaints in Boston, cancelled flights in Austin, TX) allow for targeted training and resource allocation to improve response times and resolution quality.
+**1. Customer Service Department:**
+- This analysis provides the customer service team with a clear understanding of the most frequent complaints, including core "Customer Service Issues" and "Miscellaneous" problems (e.g., online cancellation difficulties, food service, long wait times). It identifies peak hours and days (mornings, nights, Sundays) for customer dissatisfaction, enabling optimized staffing and proactive engagement. Regional hotspots for negative sentiment (e.g., Washington D.C., NYC, Chicago) and specific issues within those areas (e.g., flight attendant complaints in Boston, cancelled flights in Austin, TX) allow for targeted training and resource allocation to improve response times and resolution quality.
 
-**Operations Department:**
-For the operations team, the analysis highlights critical operational failures such as "Late Flights" (especially for American, United) and "Cancelled Flights" (Austin, TX). "Booking problems" are specifically identified with United Airways. Understanding these recurring issues, their frequency, and associated locations allows operations to prioritize improvements in scheduling, maintenance, ground services, and online system reliability to reduce disruptions and enhance passenger experience.
+**2. Operations Department:**
+- For the operations team, the analysis highlights critical operational failures such as "Late Flights" (especially for American, United) and "Cancelled Flights" (Austin, TX). "Booking problems" are specifically identified with United Airways. Understanding these recurring issues, their frequency, and associated locations allows operations to prioritize improvements in scheduling, maintenance, ground services, and online system reliability to reduce disruptions and enhance passenger experience.
 
-**Marketing & Communications Team:**
-The marketing and communications team gains valuable insights into brand perception. The analysis reveals that United, US Airways, and American Airlines face the most negative sentiment, while Virgin America enjoys the highest positive tweet proportion. This information is crucial for developing targeted communication strategies, managing public relations during peak complaint periods, and crafting messages that address common pain points. It also informs the strategic timing of campaigns, avoiding peak negative tweeting times and leveraging quieter periods (Wednesdays, Thursdays) for promotional efforts.
+**3. Marketing & Communications Team:**
+- The marketing and communications team gains valuable insights into brand perception. The analysis reveals that United, US Airways, and American Airlines face the most negative sentiment, while Virgin America enjoys the highest positive tweet proportion. This information is crucial for developing targeted communication strategies, managing public relations during peak complaint periods, and crafting messages that address common pain points. It also informs the strategic timing of campaigns, avoiding peak negative tweeting times and leveraging quieter periods (Wednesdays, Thursdays) for promotional efforts.
 
-**Senior Management & Strategy:**
-This comprehensive overview allows senior management to grasp the overall state of customer satisfaction and identify systemic issues. The pervasive negative sentiment underscores the need for a holistic, customer-centric approach to strategy. Understanding the high confidence in negative classifications, the dominance of customer service and operational issues, and the impact of data gaps (no location/timezone) can guide investment in technology, staff training, and data infrastructure. It also provides a benchmark for monitoring the effectiveness of strategic initiatives aimed at improving customer experience and brand reputation.
+**4. Senior Management & Strategy:**
+- This comprehensive overview allows senior management to grasp the overall state of customer satisfaction and identify systemic issues. The pervasive negative sentiment underscores the need for a holistic, customer-centric approach to strategy. Understanding the high confidence in negative classifications, the dominance of customer service and operational issues, and the impact of data gaps (no location/timezone) can guide investment in technology, staff training, and data infrastructure. It also provides a benchmark for monitoring the effectiveness of strategic initiatives aimed at improving customer experience and brand reputation.
 
 ### Goal
-The objective of this analysis is to:
-The primary goal is to leverage tweet data to understand public perception of airlines, identify key drivers of negative sentiment, and help airlines make data-driven decisions to improve customer satisfaction and service quality. This could involve building predictive models for sentiment or root cause analysis for the below mentioned key points.
+- The objective of this analysis is to leverage tweet data to understand public perception of airlines, identify key drivers of negative sentiment, and help airlines make data-driven decisions to improve customer satisfaction and service quality. This could involve building predictive models for sentiment or root cause analysis for the below mentioned key points.
 
-- Customer Loyalty & Retention
-- Demographic & Geographic Analysis
-- Program Effectiveness & Customer Behavior
+  - Customer Loyalty & Retention
+  - Demographic & Geographic Analysis
+  - Program Effectiveness & Customer Behavior
   
 ### Data structure and initial checks
 [Dataset](https://docs.google.com/spreadsheets/d/1EmudVOp_6vISH8C27vD4agJJEUKdFzSddlHsfkjXDeg/edit?gid=639920194#gid=639920194)
